@@ -1,0 +1,193 @@
+************Vehicle Counting Log*************
+
+************Update at 17:08:22*************
+Stats:
+{
+Total vehicles: 1
+Vehicles inbound: 1
+Vehicles outbound: 0
+}
+
+************Update at 17:08:24*************
+Stats:
+{
+Total vehicles: 2
+Vehicles inbound: 2
+Vehicles outbound: 0
+}
+
+************Update at 17:08:25*************
+Stats:
+{
+Total vehicles: 3
+Vehicles inbound: 2
+Vehicles outbound: 1
+}
+
+************Update at 17:08:25*************
+Stats:
+{
+Total vehicles: 4
+Vehicles inbound: 3
+Vehicles outbound: 1
+}
+
+************Update at 17:08:25*************
+Stats:
+{
+Total vehicles: 5
+Vehicles inbound: 4
+Vehicles outbound: 1
+}
+
+************Update at 17:08:28*************
+Stats:
+{
+Total vehicles: 6
+Vehicles inbound: 5
+Vehicles outbound: 1
+}
+
+************Update at 17:08:29*************
+Stats:
+{
+Total vehicles: 7
+Vehicles inbound: 6
+Vehicles outbound: 1
+}
+
+************Update at 17:08:30*************
+Stats:
+{
+Total vehicles: 9
+Vehicles inbound: 8
+Vehicles outbound: 1
+}
+
+************Update at 17:08:31*************
+Stats:
+{
+Total vehicles: 10
+Vehicles inbound: 9
+Vehicles outbound: 1
+}
+
+************Update at 17:08:31*************
+Stats:
+{
+Total vehicles: 11
+Vehicles inbound: 9
+Vehicles outbound: 2
+}
+
+************Update at 17:08:31*************
+Stats:
+{
+Total vehicles: 12
+Vehicles inbound: 9
+Vehicles outbound: 3
+}
+
+************Update at 17:08:32*************
+Stats:
+{
+Total vehicles: 14
+Vehicles inbound: 10
+Vehicles outbound: 4
+}
+
+************Update at 17:08:32*************
+Stats:
+{
+Total vehicles: 15
+Vehicles inbound: 11
+Vehicles outbound: 4
+}
+
+************Update at 17:08:32*************
+Stats:
+{
+Total vehicles: 16
+Vehicles inbound: 12
+Vehicles outbound: 4
+}
+
+************Update at 17:08:34*************
+Stats:
+{
+Total vehicles: 17
+Vehicles inbound: 13
+Vehicles outbound: 4
+}
+
+************Update at 17:08:35*************
+Stats:
+{
+Total vehicles: 18
+Vehicles inbound: 14
+Vehicles outbound: 4
+}
+
+************Update at 17:08:35*************
+Stats:
+{
+Total vehicles: 19
+Vehicles inbound: 15
+Vehicles outbound: 4
+}
+
+************Update at 17:08:35*************
+Stats:
+{
+Total vehicles: 20
+Vehicles inbound: 16
+Vehicles outbound: 4
+}
+
+************Update at 17:08:36*************
+Stats:
+{
+Total vehicles: 21
+Vehicles inbound: 17
+Vehicles outbound: 4
+}
+
+************Update at 17:08:36*************
+Stats:
+{
+Total vehicles: 22
+Vehicles inbound: 17
+Vehicles outbound: 5
+}
+
+************Update at 17:08:40*************
+Stats:
+{
+Total vehicles: 23
+Vehicles inbound: 18
+Vehicles outbound: 5
+}
+
+************Update at 17:08:40*************
+Stats:
+{
+Total vehicles: 24
+Vehicles inbound: 18
+Vehicles outbound: 6
+}
+
+************Update at 17:08:41*************
+Stats:
+{
+Total vehicles: 25
+Vehicles inbound: 18
+Vehicles outbound: 7
+}
+
+************Update at 17:08:41*************
+Stats:
+{
+Total vehicles: 26
+Vehicles inbound: 19
+Vehicles outbound: 7
+}
