@@ -120,6 +120,7 @@ celerybeat.pid
 .venv
 env/
 count_env/*
+minimal_env/*
 venv/
 ENV/
 env.bak/
