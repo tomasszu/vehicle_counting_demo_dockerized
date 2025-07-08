@@ -13,8 +13,8 @@ __pycache__/
 
 # C extensions
 *.pt
-*.mp4
-*.avi
+#*.mp4
+#*.avi
 *.git
 *.mov
 

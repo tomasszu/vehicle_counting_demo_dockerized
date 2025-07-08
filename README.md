@@ -1,12 +1,16 @@
 # Vehicle Counting Demo
 
-This project performs **real-time vehicle detection, tracking, and counting** using **YOLO models and ByteTrack** via the **Supervision** library. It supports both local video files and live video streams.
+This project performs **real-time vehicle detection, tracking, and counting** using **YOLO models and ByteTrack** via a self modified and improved  **Supervision** library. It supports both local video files and live video streams.
+
+The Supervision Line Zone logic was specifically improved for suboptimal video feed conditions — such as low frame rate, occlusions, and vehicles appearing too close or too far from the camera — where consistent per-frame detection cannot be guaranteed. The goal is to ensure robust vehicle counting even when object detections are intermittently lost or delayed.
 
 Counts of vehicles crossing a predefined line are displayed on screen and written to a log file (output.txt by default).
 
 ## Contents
 
    - main.py — main script for detection, tracking, and counting.
+  
+   - Modified Supervision package (supervision/supervision/detection/line_zone.py)
 
    - Uses YOLOv8 or YOLOv5 for object detection.
 
@@ -35,7 +39,7 @@ python main.py --vid 1 --device cuda --model yolov8m.pt --output_txt output.txt
 | -------------- | ------------------------------------ | --------------------------------- |
 | `--vid`        | Video source to use (see list below) | `1`, `2`, `3`, `4` (default: `1`) |
 | `--device`     | Device to run YOLO model on          | `cuda`, `cpu` (default: `cuda`)   |
-| `--model`      | Path to YOLO model                   | `yolov8m.pt`, `yolov8s.pt`, etc.  |
+| `--model`      | Path to YOLO v8 or v5 model                   | `yolov8m.pt`, `yolov5su.pt`, etc.  |
 | `--output_txt` | File to write vehicle count logs     | `output.txt`                      |
 
 ## Video Sources
@@ -78,6 +82,22 @@ Vehicles outbound: 11
 ```
 
 Logs are updated only when new vehicles are detected crossing the counting line.
+
+## Key design objectives in modifying line counting in Supervision package
+
+1) Partial exit handling: A vehicle is counted even if its detection disappears before fully crossing the line, as long as the majority of its bounding box area has clearly crossed from one side of the line to the other. This accounts for cases where tracking or detection fails during the exit.
+
+2) Late detection handling: A vehicle is counted even if its first detection appears already straddling or partially over the line. This accommodates scenarios where detection starts late — i.e., after the vehicle has already begun crossing — so the system doesn't miss entries due to delayed recognition.
+
+3) Skipped frame resilience: The system is designed to tolerate skipped or missing frames, ensuring that vehicle transitions across the line are inferred from tracked positions before and after the missing frames. This helps maintain count accuracy even under severe frame drops or intermittent detection losses.
+
+This behavior is implemented by extending and modifying classes from the supervision package, which is integrated via a Git reference in the `requirements.txt`:
+
+```
+-e git+https://github.com/roboflow/supervision.git@8599345a3c00c26e7a05d7c81e23bf1d5cf8b8e2#egg=supervision
+
+```
+
 
 ## Notes
 
