@@ -1,25 +1,92 @@
-<h1>Vehicle counting 2nd Iteration</h1>
-<h2>(To be updated)</h2>
+# Vehicle Counting Demo
 
-<h3>Contents</h3>
-<ul>
-<li> Counting of Vehicles in video stream in counting_main.py.</li>
-<li> Testing of counting function in counting_test.py.</li>
-<li> Keys for video access not uploaded</li>
-</ul>
+This project performs **real-time vehicle detection, tracking, and counting** using **YOLO models and ByteTrack** via the **Supervision** library. It supports both local video files and live video streams.
 
-<h3>Packages used for this process</h3>
-<ul>
-<li> Ultralytics package for YOLO object detection</li>
-<li> Supervision package for ByteTrack object tracking and counting</li>
-</ul>
+Counts of vehicles crossing a predefined line are displayed on screen and written to a log file (output.txt by default).
 
-<h3>Usage</h3>
+## Contents
 
-<p> Open the counting_main.py file. Change the "CAM" static variable to your camera number of choice and watch the vehicles be counted both visually and logs output textually in the folder output_files. Each camera has its own output file. Each file gets re-written if counting is exited and resumed, so save files for future reference.</p>
+   - main.py — main script for detection, tracking, and counting.
 
-<p> Functionality can be tested with the counting_test.py. Change the "CAM" static variable to your camera number of choice, hold ENTER to progress the video and watch the vehicles be counted both visually and logs output textually in the shared "output.txt".</p>
+   - Uses YOLOv8 or YOLOv5 for object detection.
 
+   - Uses ByteTrack (via Supervision) for multi-object tracking.
 
-<p><b>NB!</b> Use requirements.txt for package dependencies in the virtual environment.</p>
-<p><code>pip install -r requirements.txt  # Install dependencies from the requirements.txt file</code></p>
+   - Annotates frames with bounding boxes, labels, tracks, and line-crossing stats.
+
+## Dependencies
+
+Install all required packages in a virtual environment with:
+
+```sh
+pip install -r requirements.txt
+
+```
+## Usage
+
+run the script using
+
+```sh
+python main.py --vid 1 --device cuda --model yolov8m.pt --output_txt output.txt
+```
+
+### Command line arguments
+| Argument       | Description                          | Options/Default                   |
+| -------------- | ------------------------------------ | --------------------------------- |
+| `--vid`        | Video source to use (see list below) | `1`, `2`, `3`, `4` (default: `1`) |
+| `--device`     | Device to run YOLO model on          | `cuda`, `cpu` (default: `cuda`)   |
+| `--model`      | Path to YOLO model                   | `yolov8m.pt`, `yolov8s.pt`, etc.  |
+| `--output_txt` | File to write vehicle count logs     | `output.txt`                      |
+
+## Video Sources
+
+You can choose between four video inputs with the --vid argument:
+
+| ID | Source         | Description                                                        |
+| -- | -------------- | ------------------------------------------------------------------ |
+| 1  | `videos/1.mp4` | Local test high quality video                                 |
+| 2  | `videos/2.avi` | Local high quality test video                              |
+| 3  | Traffic live stream    | Publicly available [`NYSDOT` RTSP stream](https://s58.nysdot.skyvdn.com)              |
+| 4  | Traffic live stream    | Publicly available [`MJPEG stream`](http://80.151.142.110:8080/?action=stream) |
+
+ ## Features
+
+- Line-based counting: Vehicles are counted once they cross a predefined virtual line.
+
+- YOLO object detection: Fast and accurate bounding box predictions.
+
+- ByteTrack tracking: Maintains consistent tracking of objects across frames.
+
+- Output logging: Vehicle counts are logged periodically to a file.
+
+- Visual feedback: Bounding boxes, tracks, and counts are rendered on the video.
+
+## Log Output Example
+
+```txt
+
+************Vehicle Counting Log*************
+
+************Update at 14:32:16*************
+Stats:
+{
+Total vehicles: 21
+Vehicles inbound: 10
+Vehicles outbound: 11
+}
+
+```
+
+Logs are updated only when new vehicles are detected crossing the counting line.
+
+## Notes
+
+- If you restart the script, the log file (output.txt by default) will be overwritten.
+
+- For accurate counting, adjust the line coordinates in get_video_parameters() per your input video or stream.
+
+- Confidence threshold for detections is set to 0.6.
+
+## Credits
+
+Test video files were taken from the https://www.kaggle.com/datasets/shawon10/road-traffic-video-monitoring dataset on Kaggle.

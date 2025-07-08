@@ -35,6 +35,7 @@ class VehicleCounter:
         self.class_ids = [2, 3, 5, 7]  # car, motorcycle, bus, truck
 
         # Set video parameters based on the video number
+        self.video_number = video_number
         self.start_point, self.end_point, self.cap = self.get_video_parameters(video_number)
 
         # The line zone is the area where vehicles will be counted if they cross it
@@ -78,6 +79,20 @@ class VehicleCounter:
         elif video_number == 2:
             start, end = sv.Point(x=150, y=450), sv.Point(x=1200, y=450)
             cap = cv2.VideoCapture('videos/2.avi')
+        elif video_number == 3:
+            start, end = sv.Point(x=40, y=120), sv.Point(x=450, y=100)
+            stream_url = "https://s58.nysdot.skyvdn.com/rtplive/TA_208/chunklist_w1095005895.m3u8"
+            cap = cv2.VideoCapture(stream_url)
+            if not cap.isOpened():
+                print("Failed to open stream.")
+                exit()
+        elif video_number == 4:
+            start, end = sv.Point(x=170, y=160), sv.Point(x=500, y=200)
+            stream_url = "http://80.151.142.110:8080/?action=stream"
+            cap = cv2.VideoCapture(stream_url)
+            if not cap.isOpened():
+                print("Failed to open stream.")
+                exit()
         else:
             raise ValueError("Invalid video number.")
         return start, end, cap
@@ -102,6 +117,7 @@ class VehicleCounter:
         Returns:
             sv.Detections: Detections of vehicles in the frame after filtering.
         """
+        # Run the model on the current frame
         results = self.model(frame)[0]
         detections = sv.Detections.from_ultralytics(results)
         detections = detections[np.isin(detections.class_id, self.class_ids)]
@@ -151,9 +167,11 @@ class VehicleCounter:
                 self.curr_out_count = self.count_line.out_count
                 self.log_counts()
 
+            # Show the current frame with annotations
             display = cv2.resize(annotated_frame, (1280, 960))
             cv2.imshow("Vehicle Detection", display)
-            if cv2.waitKey(0) & 0xFF == ord('q'):
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
             ret, frame = self.cap.read()
@@ -171,7 +189,7 @@ class VehicleCounter:
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Vehicle Detection and Counting")
-    parser.add_argument("--vid", type=int, choices=[1, 2], default=1, help="Video number to use for detection")
+    parser.add_argument("--vid", type=int, choices=[1, 2,3, 4], default=1, help="Video number to use for detection")
     parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="Device to run the model on")
     parser.add_argument("--model", type=str, default="yolov8m.pt", choices=["yolov8m.pt", "yolov8s.pt", "yolov8n.pt", "yolov5su.pt"], help="Path to the YOLO model file")
     parser.add_argument("--output_txt", type=str, default="output.txt", help="Output text file name for logging")
@@ -179,7 +197,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    print("Starting vehicle detection...")
+    print("Starting vehicle counting...")
     counter = VehicleCounter(
         model_path=args.model,
         device_name=args.device,
@@ -187,7 +205,7 @@ def main():
         video_number=args.vid
     )
     counter.run()
-    print("Done!")
+    print("Stream finished.")
     print(f"Output saved to {args.output_txt}")
 
 if __name__ == "__main__":
