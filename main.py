@@ -1,6 +1,12 @@
-import cv2
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath("supervision"))
+""" The Supervision library is used for object detection and tracking. And this demo contains an edited version of the library"""
 import supervision as sv
 from ultralytics import YOLO
+
+import cv2
 import numpy as np
 from datetime import datetime
 import torch
@@ -171,7 +177,7 @@ class VehicleCounter:
             display = cv2.resize(annotated_frame, (1280, 960))
             cv2.imshow("Vehicle Detection", display)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(25) & 0xFF == ord('q'):
                 break
 
             ret, frame = self.cap.read()
