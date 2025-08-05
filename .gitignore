@@ -146,3 +146,5 @@ dmypy.json
 
 # Notebooks
 notebooks/
+
+output.txt
