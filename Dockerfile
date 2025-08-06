@@ -22,4 +22,7 @@ RUN pip3 install --no-cache-dir -r /app/requirements.txt
 WORKDIR /app
 COPY . /app
 
+# Declare a mountable volume for logs
+VOLUME ["/app/logs"]
+
 CMD ["python3", "main.py"]

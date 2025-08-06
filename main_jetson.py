@@ -34,7 +34,7 @@ class VehicleCounter:
 
         # Initialize the ByteTrack tracker
         self.tracker = sv.ByteTrack()
-        self.output_file = open(output_txt, "w")
+        self.output_file = open(f"logs/{output_txt}", "w")
         self.output_file.write("************Vehicle Counting Log*************\n")
 
         # Define class names and queried IDs for vehicles
@@ -161,7 +161,6 @@ class VehicleCounter:
 
 
             #For execution on Jetson we ommit displaying of frames
-            print("Processing frame...")
 
             ret, frame = self.cap.read()
 
