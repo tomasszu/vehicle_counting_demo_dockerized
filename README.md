@@ -6,6 +6,8 @@ The project original description and usage is available at: [Vehicle Counting De
 
 The Jetsion container version slightly differs from the original project in that it has no GUI video display of the counting results. The counting results can been acquired from the logs which will be passed from the container to the host via volume mounting. The resulting logs will be available in the output.txt (by default) file in the folder of your choosing e.g. ~/counting/logs. More on this in [Usage](#usage)
 
+<font color="red"><b>!!!</b></font><font color="#E1C2FF"> A Jetson docker container version that send the vehicle counting results over MQTT is available on the [jetson_mqtt](https://github.com/tomasszu/vehicle_counting_demo_dockerized/tree/jetson_mqtt#vehicle-counting-demo-jetson-mqtt-branch) branch of this project.</font>
+
 ## Contents
 
 This repo includes:
