@@ -1,4 +1,4 @@
-# Vehicle Counting Demo
+# Vehicle Counting Demo Dockerized
 
 This is a repository for the dockerization of the original vehicle detection and counting project. Dockerization is available both for running the container on Ubuntu and Nvidia Jetson.
 
