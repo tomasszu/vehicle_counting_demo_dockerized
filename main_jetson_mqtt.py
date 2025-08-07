@@ -1,4 +1,5 @@
 import sys
+import signal
 import os
 
 sys.path.insert(0, os.path.abspath("supervision"))
@@ -12,6 +13,9 @@ from datetime import datetime
 import torch
 import argparse
 
+from mqttLogHandler import MqttLogHandler as MqttHandler
+import logging
+
 class VehicleCounter:
     """Class to handle vehicle detection and counting using YOLO model.
     This class initializes the YOLO model, sets up the video capture, and processes frames
@@ -19,7 +23,7 @@ class VehicleCounter:
     """
 
 
-    def __init__(self, model_path, device_name, output_txt, video_number):
+    def __init__(self, model_path, device_name, output_txt, video_number, logger):
         """Initializes the VehicleCounter with the model, device, output file, and video parameters.
         Args:
             model_path (str): Path to the YOLO model file.
@@ -33,7 +37,7 @@ class VehicleCounter:
 
         # Initialize the ByteTrack tracker
         self.tracker = sv.ByteTrack()
-        self.output_file = open(output_txt, "w")
+        self.output_file = open(f"logs/{output_txt}", "w")
         self.output_file.write("************Vehicle Counting Log*************\n")
 
         # Define class names and queried IDs for vehicles
@@ -52,6 +56,19 @@ class VehicleCounter:
         # Initialize counts for inbound and outbound vehicles
         self.curr_in_count = 0
         self.curr_out_count = 0
+
+        # Handle graceful shutdown on SIGINT (Ctrl+C)
+        self.keep_running = True
+
+        # Set up Mqtt logging
+        self.logger = logger
+        self.logger.info("VehicleCounter initialized with model: %s, device: %s", model_path, device_name)
+
+    def stop(self, signum, frame):
+        print(f"\n[INFO] Caught signal {signum}. Exiting gracefully...")
+        self.keep_running = False
+
+
 
     def get_device(self, device_name):
         """Determines the device to run the model on.
@@ -115,6 +132,8 @@ class VehicleCounter:
                                f"Vehicles outbound: {self.curr_out_count}\n"
                                f"}}\n")
         self.output_file.flush()
+        self.logger.info("Total vehicles: %s, Vehicles inbound: %s, Vehicles outbound: %s", self.curr_in_count + self.curr_out_count, self.curr_in_count, self.curr_out_count)
+
 
     def process_detections(self, frame):
         """Processes the frame to detect vehicles and update counts.
@@ -132,29 +151,6 @@ class VehicleCounter:
         self.count_line.trigger(detections)
         return detections
 
-    def annotate_frame(self, frame, detections):
-        """Annotates the frame with bounding boxes, labels, and traces for detected vehicles.
-        Args:
-            frame (numpy.ndarray): The current video frame to annotate.
-            detections (sv.Detections): Detections of vehicles in the frame.
-        Returns:
-            numpy.ndarray: The annotated frame with bounding boxes, labels, and traces.
-        """
-        box_annotator = sv.BoundingBoxAnnotator()
-        label_annotator = sv.LabelAnnotator()
-        trace_annotator = sv.TraceAnnotator()
-
-        labels = [
-            f"#{tracker_id} {self.class_names_dict[class_id]} {confidence:0.2f}"
-            for _, _, confidence, class_id, tracker_id, _ in detections
-        ]
-
-        frame = self.line_annotator.annotate(frame, self.count_line)
-        annotated = box_annotator.annotate(scene=frame.copy(), detections=detections)
-        annotated = label_annotator.annotate(scene=annotated, detections=detections, labels=labels)
-        annotated = trace_annotator.annotate(scene=annotated, detections=detections)
-        return annotated
-
     def run(self):
         """Runs the vehicle detection and counting process.
         This method captures video frames, processes them for vehicle detection,
@@ -163,9 +159,8 @@ class VehicleCounter:
         """
         ret, frame = self.cap.read()
 
-        while ret:
+        while ret and self.keep_running:
             detections = self.process_detections(frame)
-            annotated_frame = self.annotate_frame(frame, detections)
 
             if (self.curr_in_count < self.count_line.in_count or
                 self.curr_out_count < self.count_line.out_count):
@@ -173,12 +168,8 @@ class VehicleCounter:
                 self.curr_out_count = self.count_line.out_count
                 self.log_counts()
 
-            # Show the current frame with annotations
-            display = cv2.resize(annotated_frame, (1280, 960))
-            cv2.imshow("Vehicle Detection", display)
 
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                break
+            #For execution on Jetson we ommit displaying of frames
 
             ret, frame = self.cap.read()
 
@@ -191,7 +182,6 @@ class VehicleCounter:
         """
         self.cap.release()
         self.output_file.close()
-        cv2.destroyAllWindows()
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Vehicle Detection and Counting")
@@ -202,6 +192,20 @@ def parse_args():
     return parser.parse_args()
 
 def main():
+    # MQTT log setup
+
+    mqtt_broker = "mosquitto_test"   # If same Docker network
+    mqtt_port = 1883                 # Container-internal port
+    mqtt_topic = "vehicle/logs"
+
+    logger = logging.getLogger("vehicle_logger")
+    logger.setLevel(logging.INFO)
+
+    mqtt_handler = MqttHandler(mqtt_broker, mqtt_port, mqtt_topic)
+    mqtt_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(mqtt_handler)
+
+    logger.info("Jetson Vehicle Counting container started")
 
     args = parse_args()
     print("Starting vehicle counting...")
@@ -209,8 +213,13 @@ def main():
         model_path=args.model,
         device_name=args.device,
         output_txt=args.output_txt,
-        video_number=args.vid
+        video_number=args.vid,
+        logger = logger
     )
+
+    signal.signal(signal.SIGINT, counter.stop)   # Ctrl+C
+    signal.signal(signal.SIGTERM, counter.stop)  # docker stop
+
     counter.run()
     print("Stream finished.")
     print(f"Output saved to {args.output_txt}")
