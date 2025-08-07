@@ -1,101 +1,95 @@
-# Vehicle Counting Demo
+# Vehicle Counting Demo Jetson MQTT branch
 
-This is a repository for the dockerization of the original vehicle detection and counting project. Dockerization is available both for running the container on Ubuntu and Nvidia Jetson.
+This is a repository for the dockerization of the original vehicle detection and counting project. On this branch dockerization is available running the container on Nvidia Jetson and outputting the counting logs via mqtt.
 
 The project original description and usage is available at: [Vehicle Counting Demo Repo](https://github.com/tomasszu/vehicle_counting_demo?tab=readme-ov-file#vehicle-counting-demo)
 
-The Jetsion container version slightly differs from the original project in that it has no GUI video display of the counting results. The counting results can been acquired from the logs which will be passed from the container to the host via volume mounting. The resulting logs will be available in the output.txt (by default) file in the folder of your choosing e.g. ~/counting/logs. More on this in [Usage](#usage)
+The Jetsion container version slightly differs from the original project in that it has no GUI video display of the counting results. The counting results will be forwarded via MQTT messages to the selected broker and topic. More on this in [Usage](#usage).
 
 ## Contents
 
 This repo includes:
 
 - The original project code
-- Dockerization for **Ubuntu** launch-case
+- Dockerization for Nvidia **Jetson** device
   - Dockerfile
-  - Docker image [vehiclecountingdemodockerized:ubuntu_latest](https://github.com/tomasszu/vehicle_counting_demo_dockerized/pkgs/container/vehiclecountingdemodockerized)
-- Dockerization for Nvidia **Jetson** launch-case
-  - Dockerfile
-  - Docker image [vehiclecountingdemodockerized:jetson_latest](https://github.com/tomasszu/vehicle_counting_demo_dockerized/pkgs/container/vehiclecountingdemodockerized)
+  - Docker image [vehiclecountingdemodockerized:jetson_mqtt_latest](https://github.com/tomasszu/vehicle_counting_demo_dockerized/pkgs/container/vehiclecountingdemodockerized)
 
 
 ## Dependencies
 
-All the dependencies exist within the Docker image, however, support for NVIDIA GPU usage must be present on the device to use CUDA device GPU functionality. The Jetson images have been tested on Jetson Orin exclusively
+All the dependencies exist within the Docker image, however, support for NVIDIA GPU usage must be present on the device to use CUDA device GPU functionality. The Jetson images have been tested on Jetson Orin exclusively. An MQTT broker needs to be accessable for receiving the messages.
 
 ## Usage
 
-### Ubuntu version
 
-0. Download the Docker image ( available on the right under the section "Packages")
+1. Download the Docker image ( available on the right under the section "Packages")
 
-1. Allow Docker to run GPU apps
-
-```sh
-xhost +local:docker  # allow Docker GUI apps
-```
-
-2. Run the Docker container
-
-```sh
-docker run --rm -it \
-    --gpus all \
-    -e DISPLAY=$DISPLAY \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    --name vehicle_counting \
-    ghcr.io/tomasszu/vehiclecountingdemodockerized:jetson_ubuntu
-
-```
-
-(Remove the `--gpus` option if you plan to run it on CPU)
-
-3. Additional parameters can be passed like this:
-
-The additional parameters are passed on the last line after container name. The example contains the default values that are picked when ommiting additional parameter execution.
-
-```sh 
-docker run --rm -it \
-    --gpus all \
-    -e DISPLAY=$DISPLAY \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    --name vehicle_counting \
-    ghcr.io/tomasszu/vehiclecountingdemodockerized:jetson_ubuntu \
-    python3 main.py --vid 1 --device cuda
-```
-
-### Jetson version
-
-0. Download the Docker image ( available on the right under the section "Packages")
-
-1. Create the directory you'd like the logs to be saved in e.g. `~/counting/logs`
+2. Run the Docker container by selecting your mqtt broker details
 
 ```sh
 
-mkdir ~/counting/logs
-
-```
-
-2. Run the Docker container by passing the mounted volume folder of your choice
-
-```sh
-
-sudo docker run -it --net=host --runtime nvidia \
-    -v ~/counting/logs:/app/logs \
-    --name vehicle_counting \
-    ghcr.io/tomasszu/vehiclecountingdemodockerized:jetson_latest
+sudo docker run -it --runtime nvidia \
+  --name vehicle_counting  \
+  ghcr.io/tomasszu/vehiclecountingdemodockerized:jetson_mqtt_latest \
+  python3 main_jetson_mqtt.py --mqtt_broker=test.mosquitto.org --mqtt_port=1883 --mqtt_topic="counting/logs"
 
 ```
 
 3. Additional parameters can be passed like this:
 
-The additional parameters are passed on the last line after container name. The example contains the default values that are picked when ommiting additional parameter execution.
+The additional parameters are passed on the last line after container name. The example contains the default values for parameters like `--vid` and `--device`.
 
 ```sh 
 sudo docker run -it --net=host --runtime nvidia \
-    -v ~/counting/logs:/app/logs \
     --name vehicle_counting \
-    ghcr.io/tomasszu/vehiclecountingdemodockerized:jetson_latest \
-    python3 main_jetson.py --vid 1 --device cuda
+    ghcr.io/tomasszu/vehiclecountingdemodockerized:jetson_mqtt_latest \
+    python3 main_jetson_mqtt.py --mqtt_broker=test.mosquitto.org --mqtt_port=1883 --mqtt_topic="counting/logs" --vid 1 --device cuda
+```
+
+### Default test usage
+
+1. Download the Docker image ( available on the right under the section "Packages")
+   
+2. Create a docker network
+
+```sh
+
+docker network create mqtt_test_net
+
+```
+
+3. Run a test mosquitto broker (with a .conf file of your liking - in this case allowing annonimous connections and exposing port 1883)
+
+```sh
+
+docker run -d   --name mosquitto_test \
+   --network mqtt_test_net   \
+   -p 1885:1883   \
+   -v "$PWD/mosquitto.conf":/mosquitto/config/mosquitto.conf    \
+   eclipse-mosquitto
+
+```
+
+4. Run a temporary SUB listening container with counting/logs topic
+
+```sh
+
+docker run -it --rm --network mqtt_test_net eclipse-mosquitto  \
+ mosquitto_sub --verbose -h mosquitto_test -p 1883 -t counting/logs
+
+
+```
+
+5. Run the vehilce counting container with the default options
+
+```sh
+
+sudo docker run -it --net=mqtt_test_net --runtime nvidia \
+  --name vehicle_counting  \
+  ghcr.io/tomasszu/vehiclecountingdemodockerized:jetson_mqtt_latest
+
+
 ```
 
 

@@ -1,5 +1,0 @@
-defusedxml
-numpy<2
-psutil
-typing_extensions
-ultralytics

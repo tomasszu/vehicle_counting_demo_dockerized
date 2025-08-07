@@ -23,7 +23,7 @@ class VehicleCounter:
     """
 
 
-    def __init__(self, model_path, device_name, output_txt, video_number, logger):
+    def __init__(self, model_path, device_name, video_number, logger):
         """Initializes the VehicleCounter with the model, device, output file, and video parameters.
         Args:
             model_path (str): Path to the YOLO model file.
@@ -37,8 +37,6 @@ class VehicleCounter:
 
         # Initialize the ByteTrack tracker
         self.tracker = sv.ByteTrack()
-        self.output_file = open(f"logs/{output_txt}", "w")
-        self.output_file.write("************Vehicle Counting Log*************\n")
 
         # Define class names and queried IDs for vehicles
         self.class_names_dict = self.model.model.names
@@ -121,17 +119,7 @@ class VehicleCounter:
         return start, end, cap
 
     def log_counts(self):
-        """Logs the current counts of inbound and outbound vehicles to the output file.
-        This method writes the current counts to the output file along with a timestamp.
-        """
-        now = datetime.now().strftime("%H:%M:%S")
-        self.output_file.write(f"\n************Update at {now}*************\n")
-        self.output_file.write(f"Stats:\n{{\n"
-                               f"Total vehicles: {self.curr_in_count + self.curr_out_count}\n"
-                               f"Vehicles inbound: {self.curr_in_count}\n"
-                               f"Vehicles outbound: {self.curr_out_count}\n"
-                               f"}}\n")
-        self.output_file.flush()
+        """ This method formats the counts into a log entry and publishes it to the MQTT topic."""
         self.logger.info("Total vehicles: %s, Vehicles inbound: %s, Vehicles outbound: %s", self.curr_in_count + self.curr_out_count, self.curr_in_count, self.curr_out_count)
 
 
@@ -181,38 +169,33 @@ class VehicleCounter:
         and destroys all OpenCV windows.
         """
         self.cap.release()
-        self.output_file.close()
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Vehicle Detection and Counting")
     parser.add_argument("--vid", type=int, choices=[1, 2,3, 4], default=1, help="Video number to use for detection")
     parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"], help="Device to run the model on")
     parser.add_argument("--model", type=str, default="yolov8m.pt", choices=["yolov8m.pt", "yolov8s.pt", "yolov8n.pt", "yolov5su.pt"], help="Path to the YOLO model file")
-    parser.add_argument("--output_txt", type=str, default="output.txt", help="Output text file name for logging")
+    parser.add_argument("--mqtt_broker", type=str, default="mosquitto_test", help="MQTT broker host name or IP address")
+    parser.add_argument("--mqtt_port", type=int, default=1883, help="MQTT broker port")
+    parser.add_argument("--mqtt_topic", type=str, default="counting/logs", help="MQTT topic to publish logs to")
     return parser.parse_args()
 
 def main():
+    args = parse_args()
+
     # MQTT log setup
-
-    mqtt_broker = "mosquitto_test"   # If same Docker network
-    mqtt_port = 1883                 # Container-internal port
-    mqtt_topic = "vehicle/logs"
-
     logger = logging.getLogger("vehicle_logger")
     logger.setLevel(logging.INFO)
 
-    mqtt_handler = MqttHandler(mqtt_broker, mqtt_port, mqtt_topic)
+    mqtt_handler = MqttHandler(args.mqtt_broker, args.mqtt_port, args.mqtt_topic)
     mqtt_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
     logger.addHandler(mqtt_handler)
 
     logger.info("Jetson Vehicle Counting container started")
 
-    args = parse_args()
-    print("Starting vehicle counting...")
     counter = VehicleCounter(
         model_path=args.model,
         device_name=args.device,
-        output_txt=args.output_txt,
         video_number=args.vid,
         logger = logger
     )
@@ -221,8 +204,8 @@ def main():
     signal.signal(signal.SIGTERM, counter.stop)  # docker stop
 
     counter.run()
-    print("Stream finished.")
-    print(f"Output saved to {args.output_txt}")
+    logger.info("Stream finished.")
+    mqtt_handler.close()
 
 if __name__ == "__main__":
     main()
