@@ -94,13 +94,12 @@ sudo docker run -it --net=mqtt_test_net --runtime nvidia \
 
 
 
-### Command line arguments
+### Other command line arguments
 | Argument       | Description                          | Options/Default                   |
 | -------------- | ------------------------------------ | --------------------------------- |
 | `--vid`        | Video source to use (see list below) | `1`, `2`, `3`, `4` (default: `1`) |
 | `--device`     | Device to run YOLO model on          | `cuda`, `cpu` (default: `cuda`)   |
 | `--model`      | Path to YOLO v8 or v5 model                   | `yolov8m.pt`, `yolov5su.pt`, etc.  |
-| `--output_txt` | File to write vehicle count logs     | `output.txt`                      |
 
 ## Video Sources
 
